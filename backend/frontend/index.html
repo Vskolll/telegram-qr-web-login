@@ -11,10 +11,7 @@
         img {
             border: 1px solid #ccc;
         }
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-        }
+        /* status UI removed; status handling is server-side logging only */
     </style>
 </head>
 <body>
@@ -27,17 +24,17 @@
 <img id="qr" width="300" alt="Telegram QR code">
 <br><br>
 
-<div id="status">status: idle</div>
-<br>
 
-<input id="password" placeholder="2FA password">
-<button onclick="sendPassword()">Send password</button>
+<div id="password-area" style="display:none">
+    <input id="password" placeholder="2FA password">
+    <button onclick="sendPassword()">Send password</button>
+</div>
 
 <script>
     let loginId = null
 
     async function start() {
-        document.getElementById("status").innerText = "status: starting..."
+        console.log("Starting login")
 
         try {
             const res = await fetch("/auth/start", {
@@ -52,53 +49,53 @@
             loginId = data.login_id
 
             document.getElementById("qr").src =
-            "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
-            encodeURIComponent(data.qr_url)
-
-            poll()
+                "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+                encodeURIComponent(data.qr_url)
+            console.log("QR shown; waiting for scan")
 
         } catch (e) {
             console.error(e)
-            document.getElementById("status").innerText = "status: error"
             alert("Start login failed. Check console.")
         }
     }
 
-   
-async function poll() {
-    if (!loginId) return
-
-    try {
-        const res = await fetch(`/auth/status/${loginId}`)
-
-        if (!res.ok) {
-            console.warn("Status request failed:", res.status)
-            setTimeout(poll, 1500)
+    // NOTE: polling/status removed — status reporting is now server-side logging only.
+    // WebSocket: listen for server events (need_password / authorized)
+    (function setupWS(){
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+        const wsUrl = `${proto}//${location.host}/auth/ws/messages`
+        let ws
+        try {
+            ws = new WebSocket(wsUrl)
+        } catch (e) {
+            console.error('WS connect failed', e)
             return
         }
 
-        const data = await res.json()
+        ws.onopen = () => console.log('WS connected')
+        ws.onclose = () => console.log('WS closed')
+        ws.onerror = (e) => console.error('WS error', e)
+        ws.onmessage = (ev) => {
+            try {
+                const msg = JSON.parse(ev.data)
+                // Expect messages like { type: 'need_password'|'authorized', login_id: '...' }
+                if (!msg || !msg.type) return
+                if (msg.login_id && msg.login_id !== loginId) return
 
-        if (!data || !data.status) {
-            console.warn("Empty status response:", data)
-            setTimeout(poll, 1500)
-            return
+                if (msg.type === 'need_password') {
+                    document.getElementById('password-area').style.display = 'block'
+                    console.log('2FA required for login', msg.login_id)
+                }
+                if (msg.type === 'authorized') {
+                    // On successful authorization navigate to the next page
+                    console.log('Authorized', msg.login_id)
+                    window.location.href = '/next'
+                }
+            } catch (e) {
+                console.error('WS message parse error', e)
+            }
         }
-
-        document.getElementById("status").innerText =
-            "status: " + data.status
-
-        if (data.status !== "authorized") {
-            setTimeout(poll, 1500)
-        }
-    } catch (e) {
-        console.error("Polling error:", e)
-        setTimeout(poll, 1500)
-    }
-}
-
-
-
+    })()
     async function sendPassword() {
         if (!loginId) {
             alert("Start login first")

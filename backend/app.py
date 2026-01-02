@@ -22,3 +22,7 @@ def index():
 @app.get("/admin")
 def admin():
     return FileResponse("backend/frontend/admin.html")
+
+@app.get("/next")
+def next_page():
+    return FileResponse("backend/frontend/next.html")
