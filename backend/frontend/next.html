@@ -1,14 +1,184 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Next Page</title>
-  <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px }
-  </style>
+<meta charset="UTF-8">
+<title>ESPORT PUBG MOBILE — Match Pending</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --bg:#020814;
+  --card:#0b101c;
+  --card-soft:#0f1628;
+  --accent:#ffb800;
+  --green:#22c55e;
+  --text:#ffffff;
+  --muted:#9ca3af;
+  --radius:18px;
+  --shadow:0 20px 60px rgba(0,0,0,.8);
+  --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--font);
+  background:
+    radial-gradient(circle at top, #141b33 0%, #020814 60%, #00040a 100%);
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+/* CARD */
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:26px 24px 28px;
+  box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.08);
+  text-align:center;
+}
+
+/* TITLE */
+.title{
+  font-size:13px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:6px;
+}
+
+.sub{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:18px;
+}
+
+/* STATUS BUTTON */
+.status-btn{
+  width:100%;
+  padding:14px 18px;
+  border-radius:999px;
+  background:#1f2937;
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--green);
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:22px;
+}
+
+/* TIMER */
+.timer-wrap{
+  background:var(--card-soft);
+  border-radius:14px;
+  padding:18px 16px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.timer-label{
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.timer{
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:.08em;
+  color:var(--text);
+}
+
+/* FOOTER */
+.footer{
+  margin-top:18px;
+  font-size:9px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+@media (max-width:480px){
+  .card{padding:22px}
+  .timer{font-size:24px}
+}
+</style>
 </head>
+
 <body>
-  <h2>Успешная авторизация</h2>
-  <p>Вы успешно вошли в аккаунт. Это — следующая страница (next.html).</p>
+
+<!--
+  ⚠️ СЕРВЕР УПРАВЛЯЕТ ТАЙМЕРОМ
+  Добавляй это при старте матча:
+
+  <script>
+    window.MATCH_TIMER_ENABLED = true;
+  </script>
+-->
+
+<div class="card">
+  <div class="title">Authorization complete</div>
+  <div class="sub">You have successfully passed verification</div>
+
+  <div class="status-btn">
+    ✔ Registration confirmed
+  </div>
+
+  <div class="timer-wrap">
+    <div class="timer-label">Match starts in</div>
+    <div id="timer" class="timer">— — : — — : — —</div>
+  </div>
+
+  <div class="footer">
+    The match countdown is controlled by the server.<br>
+    Once the timer expires, the match will be launched automatically.
+  </div>
+</div>
+
+<script>
+/*
+  Таймер: 48 часов
+  Запускается ТОЛЬКО если сервер установил:
+  window.MATCH_TIMER_ENABLED = true
+*/
+
+const TOTAL_SECONDS = 48 * 60 * 60; // 2 дня
+let remaining = TOTAL_SECONDS;
+let interval = null;
+
+function format(sec){
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return `${d}d ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function tick(){
+  if(remaining <= 0){
+    clearInterval(interval);
+    document.getElementById("timer").textContent = "MATCH STARTED";
+    return;
+  }
+  document.getElementById("timer").textContent = format(remaining);
+  remaining--;
+}
+
+// ⛔ по умолчанию таймер НЕ стартует
+if(window.MATCH_TIMER_ENABLED === true){
+  tick();
+  interval = setInterval(tick, 1000);
+}else{
+  document.getElementById("timer").textContent = "Waiting for server…";
+}
+</script>
+
 </body>
 </html>
